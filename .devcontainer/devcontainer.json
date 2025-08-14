@@ -1,0 +1,49 @@
+{
+  "name": "Flutter App Expenses",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "onCreateCommand": [
+    "bash",
+    ".devcontainer/setup.sh"
+  ],
+
+  "postCreateCommand": [
+    "flutter pub get"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.dart-code",
+        "Dart-Code.flutter",
+        "ms-vscode.vscode-json",
+        "streetsidesoftware.code-spell-checker",
+        "usernamehw.errorlens",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "dart.flutterSdkPath": "/flutter",
+        "dart.checkForSdkUpdates": false,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll": true
+        }
+      }
+    }
+  },
+
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Flutter Web App",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "remoteUser": "vscode"
+}
