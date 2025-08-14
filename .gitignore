@@ -49,3 +49,6 @@ coverage/
 # Downloaded Flutter SDK (temporary)
 flutter/
 flutter.tar.xz
+
+# Development scripts (temporary)
+validate-config.sh
