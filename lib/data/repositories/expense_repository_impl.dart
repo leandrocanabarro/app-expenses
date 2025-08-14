@@ -65,4 +65,16 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     if (maps.isEmpty) return null;
     return ExpenseModel.fromMap(maps.first).toEntity();
   }
+
+  @override
+  Future<void> update(Expense expense) async {
+    final db = await databaseService.database;
+    final model = ExpenseModel.fromEntity(expense);
+    await db.update(
+      'expenses',
+      model.toMap(),
+      where: 'id = ?',
+      whereArgs: [expense.id],
+    );
+  }
 }

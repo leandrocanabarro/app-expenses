@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/category.dart';
 import '../providers/category_providers.dart';
 
 class CategoriesScreen extends ConsumerWidget {
@@ -68,9 +69,18 @@ class CategoriesScreen extends ConsumerWidget {
                         child: Icon(Icons.category),
                       ),
                       title: Text(category.name),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _showDeleteDialog(context, category.name),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => _showEditDialog(context, category),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _showDeleteDialog(context, category.name, category.id!),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -139,7 +149,7 @@ class CategoriesScreen extends ConsumerWidget {
     }
   }
 
-  void _showDeleteDialog(BuildContext context, String categoryName) {
+  void _showDeleteDialog(BuildContext context, String categoryName, int categoryId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -153,16 +163,51 @@ class CategoriesScreen extends ConsumerWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              // TODO: Implement category deletion
+              ref.read(deleteCategoryControllerProvider.notifier).deleteCategory(categoryId);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Exclusão de categoria em desenvolvimento')),
-              );
             },
             child: const Text('Excluir', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
+  }
+
+  void _showEditDialog(BuildContext context, Category category) {
+    final controller = TextEditingController(text: category.name);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Categoria'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Nome da categoria',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          onSubmitted: (value) => _updateCategory(context, ref, category, value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => _updateCategory(context, ref, category, controller.text.trim()),
+            child: const Text('Atualizar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateCategory(BuildContext context, WidgetRef ref, Category category, String newName) {
+    if (newName.isNotEmpty) {
+      final updatedCategory = category.copyWith(name: newName);
+      ref.read(updateCategoryControllerProvider.notifier).updateCategory(updatedCategory);
+      Navigator.pop(context);
+    }
   }
 }

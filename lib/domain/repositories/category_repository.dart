@@ -5,4 +5,6 @@ abstract class CategoryRepository {
   Future<List<Category>> list();
   Future<Category?> findById(int id);
   Future<Category?> findByName(String name);
+  Future<void> update(Category category);
+  Future<void> delete(int id);
 }
