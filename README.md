@@ -50,14 +50,44 @@ lib/
 
 ## 🚀 Como Executar
 
-### Pré-requisitos
+### Opção 1: GitHub Codespaces (Recomendado)
 
+1. Abra o repositório no GitHub
+2. Clique em **Code** → **Codespaces** → **Create codespace on main**
+3. Aguarde a configuração automática do ambiente
+4. Execute o aplicativo:
+```bash
+flutter run -d web-server --web-port 3000 --web-hostname 0.0.0.0
+```
+
+### Opção 2: Docker (Local)
+
+1. Clone o repositório:
+```bash
+git clone https://github.com/leandrocanabarro/app-expenses.git
+cd app-expenses
+```
+
+2. Execute com Docker Compose:
+```bash
+# Executar a aplicação
+docker-compose up app
+
+# Ou para desenvolvimento interativo
+docker-compose run --rm dev
+```
+
+3. Acesse a aplicação em `http://localhost:3000`
+
+### Opção 3: Instalação Local
+
+#### Pré-requisitos
 - Flutter 3.24.5 ou superior
 - Dart 3.1.0 ou superior
 - Android Studio / VS Code
 - Git
 
-### Instalação
+#### Instalação
 
 1. Clone o repositório:
 ```bash
@@ -148,6 +178,27 @@ flutter test --coverage
 - `fl_chart`: Gráficos (futuro)
 
 ## 🔧 Desenvolvimento
+
+### Ambientes de Desenvolvimento
+
+Este projeto oferece múltiplas opções para desenvolvimento:
+
+#### 🌐 GitHub Codespaces
+- **Configuração automática**: Ambiente pré-configurado com Flutter 3.24.5
+- **Acesso via browser**: Desenvolva diretamente no navegador
+- **Extensões incluídas**: Dart, Flutter, e ferramentas essenciais
+- **Porta exposta**: 3000 para desenvolvimento web
+
+#### 🐳 Docker
+- **Dockerfile**: Imagem personalizada com Flutter
+- **docker-compose.yml**: Configuração simplificada
+- **Volume persistente**: Cache do pub para builds rápidos
+- **Serviços separados**: `app` para execução e `dev` para desenvolvimento
+
+#### 💻 Local
+- **Flutter SDK**: 3.24.5 ou superior
+- **Suporte completo**: Android, iOS, Web
+- **Hot reload**: Desenvolvimento rápido
 
 ### Estrutura de Commits
 

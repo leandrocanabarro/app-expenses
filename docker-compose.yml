@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - flutter_pub_cache:/root/.pub-cache
+    environment:
+      - FLUTTER_WEB_PORT=3000
+      - FLUTTER_WEB_HOSTNAME=0.0.0.0
+    command: flutter run -d web-server --web-port 3000 --web-hostname 0.0.0.0
+    stdin_open: true
+    tty: true
+
+  # Development service for running commands
+  dev:
+    build: .
+    volumes:
+      - .:/app
+      - flutter_pub_cache:/root/.pub-cache
+    working_dir: /app
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+
+volumes:
+  flutter_pub_cache:
