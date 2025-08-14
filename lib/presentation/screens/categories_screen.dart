@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/category.dart';
 import '../providers/category_providers.dart';
+import '../providers/csv_export_providers.dart';
 
 class CategoriesScreen extends ConsumerWidget {
   const CategoriesScreen({super.key});
@@ -38,6 +39,16 @@ class CategoriesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Categorias'),
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Text('Exportar CSV'),
+                onTap: () => _exportCategories(context, ref),
+              ),
+            ],
+          ),
+        ],
       ),
       body: categoriesAsync.when(
         data: (categories) => categories.isEmpty
@@ -209,5 +220,59 @@ class CategoriesScreen extends ConsumerWidget {
       ref.read(updateCategoryControllerProvider.notifier).updateCategory(updatedCategory);
       Navigator.pop(context);
     }
+  }
+
+  void _exportCategories(BuildContext context, WidgetRef ref) {
+    ref.read(csvExportControllerProvider.notifier).exportCategories();
+
+    ref.listen<AsyncValue<String?>>(csvExportControllerProvider, (previous, next) {
+      next.when(
+        data: (csvContent) {
+          if (csvContent != null) {
+            _downloadCsv(csvContent, ref.read(csvExportControllerProvider.notifier).getCategoriesFileName());
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Categorias exportadas com sucesso!')),
+            );
+            ref.read(csvExportControllerProvider.notifier).reset();
+          }
+        },
+        loading: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gerando arquivo CSV...')),
+          );
+        },
+        error: (error, stackTrace) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao exportar: $error')),
+          );
+        },
+      );
+    });
+  }
+
+  void _downloadCsv(String csvContent, String fileName) {
+    // Simple approach - just show the CSV content in a dialog for now
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('CSV Exportado: $fileName'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              csvContent,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
   }
 }
