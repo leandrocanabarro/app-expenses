@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/currency_format.dart';
 import '../../domain/entities/expense.dart';
 import '../providers/category_providers.dart';
 import '../providers/expense_providers.dart';
+import '../screens/edit_expense_screen.dart';
 
 class ExpenseList extends ConsumerWidget {
   final List<Expense> expenses;
@@ -94,11 +96,22 @@ class ExpenseCard extends ConsumerWidget {
                 color: Colors.red,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-              onPressed: () => _showDeleteDialog(context, ref),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                  onPressed: () => _navigateToEdit(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                  onPressed: () => _showDeleteDialog(context, ref),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ],
             ),
           ],
         ),
@@ -128,6 +141,14 @@ class ExpenseCard extends ConsumerWidget {
             child: const Text('Excluir', style: TextStyle(color: Colors.white)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToEdit(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditExpenseScreen(expense: expense),
       ),
     );
   }

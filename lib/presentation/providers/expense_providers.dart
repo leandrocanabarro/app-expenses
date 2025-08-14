@@ -4,6 +4,7 @@ import '../../domain/entities/expense.dart';
 import '../../domain/repositories/expense_repository.dart';
 import '../../domain/usecases/add_expense_usecase.dart';
 import '../../domain/usecases/delete_expense_usecase.dart';
+import '../../domain/usecases/update_expense_usecase.dart';
 import '../../domain/usecases/get_expenses_usecase.dart';
 import 'category_providers.dart';
 
@@ -27,6 +28,11 @@ final getExpensesUseCaseProvider = Provider<GetExpensesUseCase>((ref) {
 final deleteExpenseUseCaseProvider = Provider<DeleteExpenseUseCase>((ref) {
   final repository = ref.watch(expenseRepositoryProvider);
   return DeleteExpenseUseCase(repository);
+});
+
+final updateExpenseUseCaseProvider = Provider<UpdateExpenseUsecase>((ref) {
+  final repository = ref.watch(expenseRepositoryProvider);
+  return UpdateExpenseUsecase(repository);
 });
 
 // Filters state
@@ -125,6 +131,32 @@ class DeleteExpenseController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await _useCase.call(id);
+      state = const AsyncValue.data(null);
+      
+      // Refresh expenses list
+      _ref.invalidate(expensesProvider);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+}
+
+// Update expense controller
+final updateExpenseControllerProvider = StateNotifierProvider<UpdateExpenseController, AsyncValue<void>>((ref) {
+  final useCase = ref.watch(updateExpenseUseCaseProvider);
+  return UpdateExpenseController(useCase, ref);
+});
+
+class UpdateExpenseController extends StateNotifier<AsyncValue<void>> {
+  final UpdateExpenseUsecase _useCase;
+  final Ref _ref;
+
+  UpdateExpenseController(this._useCase, this._ref) : super(const AsyncValue.data(null));
+
+  Future<void> updateExpense(Expense expense) async {
+    state = const AsyncValue.loading();
+    try {
+      await _useCase.call(expense);
       state = const AsyncValue.data(null);
       
       // Refresh expenses list

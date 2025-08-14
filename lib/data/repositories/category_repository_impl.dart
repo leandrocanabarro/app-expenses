@@ -49,4 +49,22 @@ class CategoryRepositoryImpl implements CategoryRepository {
     if (maps.isEmpty) return null;
     return CategoryModel.fromMap(maps.first).toEntity();
   }
+
+  @override
+  Future<void> update(Category category) async {
+    final db = await databaseService.database;
+    final model = CategoryModel.fromEntity(category);
+    await db.update(
+      'categories',
+      model.toMap(),
+      where: 'id = ?',
+      whereArgs: [category.id],
+    );
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    final db = await databaseService.database;
+    await db.delete('categories', where: 'id = ?', whereArgs: [id]);
+  }
 }

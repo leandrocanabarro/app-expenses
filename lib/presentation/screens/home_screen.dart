@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/currency_format.dart';
 import '../providers/expense_providers.dart';
+import '../providers/category_providers.dart';
+import '../providers/csv_export_providers.dart';
 import '../providers/voice_provider.dart';
 import '../widgets/expense_list.dart';
 import '../widgets/voice_mic_button.dart';
@@ -54,6 +56,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               PopupMenuItem(
                 child: const Text('Relatórios'),
                 onTap: () => context.push('/report'),
+              ),
+              PopupMenuItem(
+                child: const Text('Exportar CSV'),
+                onTap: () => _showExportDialog(context),
               ),
             ],
           ),
@@ -107,7 +113,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ElevatedButton.icon(
                   onPressed: () => _showCategoryFilter(context),
                   icon: const Icon(Icons.category),
-                  label: const Text('Categoria'),
+                  label: filters.categoryId != null
+                      ? Consumer(
+                          builder: (context, ref, child) {
+                            final categoryAsync = ref.watch(categoryByIdProvider(filters.categoryId!));
+                            return categoryAsync.when(
+                              data: (category) => Text(category?.name ?? 'Categoria'),
+                              loading: () => const Text('Categoria'),
+                              error: (_, __) => const Text('Categoria'),
+                            );
+                          },
+                        )
+                      : const Text('Categoria'),
                 ),
               ],
             ),
@@ -194,9 +211,139 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showCategoryFilter(BuildContext context) {
-    // TODO: Implement category filter
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Filtro por categoria em desenvolvimento')),
+    final categories = ref.watch(categoriesProvider);
+    final currentFilters = ref.read(expenseFiltersProvider);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Filtrar por Categoria'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: categories.when(
+            data: (categoriesList) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: const Text('Todas as categorias'),
+                  leading: Radio<int?>(
+                    value: null,
+                    groupValue: currentFilters.categoryId,
+                    onChanged: (value) {
+                      ref.read(expenseFiltersProvider.notifier).state = 
+                          currentFilters.copyWith(clearCategory: true);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+                const Divider(),
+                ...categoriesList.map((category) => ListTile(
+                  title: Text(category.name),
+                  leading: Radio<int?>(
+                    value: category.id,
+                    groupValue: currentFilters.categoryId,
+                    onChanged: (value) {
+                      ref.read(expenseFiltersProvider.notifier).state = 
+                          currentFilters.copyWith(categoryId: value);
+                      Navigator.pop(context);
+                    },
+                  ),
+                )),
+              ],
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => Text('Erro ao carregar categorias: $error'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Exportar dados'),
+        content: const Text('Deseja exportar os dados de gastos filtrados para CSV?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _exportExpenses();
+            },
+            child: const Text('Exportar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _exportExpenses() {
+    final filters = ref.read(expenseFiltersProvider);
+    
+    ref.read(csvExportControllerProvider.notifier).exportExpenses(
+      month: filters.month,
+      categoryId: filters.categoryId,
+    );
+
+    ref.listen<AsyncValue<String?>>(csvExportControllerProvider, (previous, next) {
+      next.when(
+        data: (csvContent) {
+          if (csvContent != null) {
+            _downloadCsv(csvContent, ref.read(csvExportControllerProvider.notifier).getExpensesFileName());
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Dados exportados com sucesso!')),
+            );
+            ref.read(csvExportControllerProvider.notifier).reset();
+          }
+        },
+        loading: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gerando arquivo CSV...')),
+          );
+        },
+        error: (error, stackTrace) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao exportar: $error')),
+          );
+        },
+      );
+    });
+  }
+
+  void _downloadCsv(String csvContent, String fileName) {
+    // Simple approach - just show the CSV content in a dialog for now
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('CSV Exportado: $fileName'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              csvContent,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
     );
   }
 }
